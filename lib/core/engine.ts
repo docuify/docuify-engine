@@ -1,5 +1,10 @@
+import { Github } from "../sources";
+import { BasePlugin } from "./basePlugins";
+import { BaseSource } from "./baseSource";
+
 export interface DocuifyEngineConfig {
-  token: string;
+  source: BaseSource;
+  plugins: BasePlugin;
 }
 
 export default class DocuifyEngine {

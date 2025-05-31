@@ -1,4 +1,4 @@
-export type ParsedSourceItem = {
+export type ParsedSourceFile = {
   path: string;
   sha: string;
   type: "folder" | "file";
@@ -6,12 +6,12 @@ export type ParsedSourceItem = {
   metadata?: Record<string, any>; // Metadata is now standard; include {} if unused
 };
 
-export type SourceData = {
+export type SourceFile = {
   source: string; // e.g. "github", "gitlab", "bitbucket", "gdrive", "neuralNet-vault9000"
-  items: ParsedSourceItem[];
+  items: ParsedSourceFile[];
 };
 
 // Base class every source should implement. No freeloaders allowed.
 export abstract class BaseSource {
-  abstract fetch(): Promise<SourceData>;
+  abstract fetch(): Promise<SourceFile>;
 }

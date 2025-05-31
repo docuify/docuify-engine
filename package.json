@@ -1,15 +1,52 @@
 {
   "name": "@docuify/engine",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./core": {
+      "require": "./dist/core/index.cjs",
+      "import": "./dist/core/index.js",
+      "types": "./dist/core/index.d.ts"
+    },
+    "./core/baseSource": {
+      "require": "./dist/core/baseSource.cjs",
+      "import": "./dist/core/baseSource.js",
+      "types": "./dist/core/baseSource.d.ts"
+    },
+    "./core/engine": {
+      "require": "./dist/core/engine.cjs",
+      "import": "./dist/core/engine.js",
+      "types": "./dist/core/engine.d.ts"
+    },
+    "./source": {
+      "require": "./dist/sources/index.cjs",
+      "import": "./dist/sources/index.js",
+      "types": "./dist/sources/index.d.ts"
+    },
+    "./source/github": {
+      "require": "./dist/sources/github.cjs",
+      "import": "./dist/sources/github.js",
+      "types": "./dist/sources/github.d.ts"
+    }
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx tsup"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@docuify/engine": "file:docuify-engine-1.0.0.tgz",
+    "dotenv": "^16.5.0",
     "tsup": "^8.5.0",
-    "tsx": "^4.19.4"
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }

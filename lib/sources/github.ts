@@ -1,4 +1,4 @@
-import { BaseSource, ParsedSourceItem, SourceData } from "../core/baseSource";
+import { BaseSource, ParsedSourceFile, SourceFile } from "../core/baseSource";
 
 
 interface GithubSourceConfig {
@@ -8,6 +8,7 @@ interface GithubSourceConfig {
   path: string;
   github_api_version?: string;
 }
+
 
 export class Github extends BaseSource {
   config: GithubSourceConfig;
@@ -27,7 +28,7 @@ export class Github extends BaseSource {
     this.config = config;
   }
 
-  async fetch(): Promise<SourceData> {
+  async fetch(): Promise<SourceFile> {
     // Step 1: Grab the entire file tree from GitHub
     const data = await this.request();
 
@@ -44,13 +45,13 @@ export class Github extends BaseSource {
     };
   }
 
-  private async parse(data: any[]): Promise<ParsedSourceItem[]> {
+  private async parse(data: any[]): Promise<ParsedSourceFile[]> {
     return await Promise.all(
       data
         .filter((item) => item.path?.startsWith(this.config.path))
         .map(async (item) => {
           const isFolder = item.type === "tree";
-          const base: ParsedSourceItem = {
+          const base: ParsedSourceFile = {
             path: item.path,
             sha: item.sha,
             type: isFolder ? "folder" : "file",
