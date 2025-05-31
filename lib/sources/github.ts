@@ -1,3 +1,4 @@
+import { BaseSource, ParsedSourceItem, SourceData } from "../core/baseSource";
 interface GithubSourceConfig {
   token: string;
   branch: string;
@@ -6,17 +7,11 @@ interface GithubSourceConfig {
   github_api_version?: string;
 }
 
-export type ParsedSourceItem = {
-  path: string;
-  sha: string;
-  type: "folder" | "file";
-  content?: string;
-};
-
-export class Github {
+export class Github extends BaseSource {
   config: GithubSourceConfig;
 
   constructor(config: GithubSourceConfig) {
+    super();
     // Validate the configuration like a TSA agent on a caffeine rush
     if (
       !config.token ||
@@ -30,14 +25,14 @@ export class Github {
     this.config = config;
   }
 
-  async fetch(): Promise<ParsedSourceItem[]> {
+  async fetch(): Promise<SourceData> {
     // Step 1: Grab the entire file tree from GitHub
     const data = await this.request();
 
     // Step 2: Parse that chaotic mess into something actually usable
     const parsedData = await this.parse(data.tree);
 
-    return parsedData;
+    return { source: "github", items: parsedData };
   }
 
   private get requestHeaders() {
@@ -67,8 +62,10 @@ export class Github {
             const content = await this.fetchFileContent(item.path);
             return { ...base, content };
           } catch (err) {
-            // File failed to load? Still return the base info. Nobody's perfect.
-            return base;
+            // File failed to load? Panic! 🔥
+            throw new Error(
+              `Failed to fetch content for ${item.path}: ${(err as Error).message}`,
+            );
           }
         }),
     );
