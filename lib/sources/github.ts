@@ -1,31 +1,40 @@
 interface GithubSourceConfig {
   token: string;
   branch: string;
-  repoFullName: string; // repo along with owner so like this owner/repo
+  repoFullName: string; // like "owner/repo"
   path: string;
   github_api_version?: string;
 }
+
+export type ParsedSourceItem = {
+  path: string;
+  sha: string;
+  type: "folder" | "file";
+  content?: string;
+};
 
 export class Github {
   config: GithubSourceConfig;
 
   constructor(config: GithubSourceConfig) {
-    // Initialize the source
+    // Validate the configuration like a TSA agent on a caffeine rush
     if (
       !config.token ||
       !config.branch ||
       !config.repoFullName ||
       !config.path
     ) {
-      throw new Error("Invalid config");
+      throw new Error("Invalid config passed to Github source.");
     }
 
     this.config = config;
   }
 
-  async fetch() {
-    // Fetch data from GitHub
+  async fetch(): Promise<ParsedSourceItem[]> {
+    // Step 1: Grab the entire file tree from GitHub
     const data = await this.request();
+
+    // Step 2: Parse that chaotic mess into something actually usable
     const parsedData = await this.parse(data.tree);
 
     return parsedData;
@@ -38,48 +47,36 @@ export class Github {
     };
   }
 
-  private async parse(data: any) {
-    const parsedData: {
-      path: string;
-      sha: string;
-      type: "folder" | "file";
-      content?: string;
-    }[] = [];
+  private async parse(data: any[]): Promise<ParsedSourceItem[]> {
+    return await Promise.all(
+      data
+        .filter((item) => item.path?.startsWith(this.config.path))
+        .map(async (item) => {
+          const isFolder = item.type === "tree";
+          const base: ParsedSourceItem = {
+            path: item.path,
+            sha: item.sha,
+            type: isFolder ? "folder" : "file",
+          };
 
-    for (const item of [...data]) {
-      if (!item.path || !item.sha || !item.type) {
-        continue;
-      }
+          if (isFolder) {
+            return base;
+          }
 
-      if (!item.path.startsWith(this.config.path)) {
-        continue;
-      }
-
-      if (item.type === "folder") {
-        parsedData.push({
-          path: item.path,
-          sha: item.sha,
-          type: "folder",
-        });
-      } else {
-        // fetch the content of the file
-        const content = await this.fetchFileContent(item.sha);
-        parsedData.push({
-          path: item.path,
-          sha: item.sha,
-          type: "file",
-          content,
-        });
-      }
-    }
-    return parsedData;
+          try {
+            const content = await this.fetchFileContent(item.path);
+            return { ...base, content };
+          } catch (err) {
+            // File failed to load? Still return the base info. Nobody's perfect.
+            return base;
+          }
+        }),
+    );
   }
 
-  async fetchFileContent(path: string): Promise<string> {
-    const res = await fetch(
-      `https://raw.githubusercontent.com/${this.config.repoFullName}/${this.config.branch}/${path}`,
-      { headers: this.requestHeaders },
-    );
+  private async fetchFileContent(path: string): Promise<string> {
+    const url = `https://raw.githubusercontent.com/${this.config.repoFullName}/${this.config.branch}/${path}`;
+    const res = await fetch(url, { headers: this.requestHeaders });
 
     if (!res.ok) {
       throw new Error(
@@ -87,16 +84,12 @@ export class Github {
       );
     }
 
-    const content = await res.text();
-
-    return content;
+    return await res.text();
   }
 
-  private async request() {
-    const res = await fetch(
-      `https://api.github.com/repos/${this.config.repoFullName}/git/trees/${this.config.branch}?recursive=1`,
-      { headers: this.requestHeaders },
-    );
+  private async request(): Promise<any> {
+    const url = `https://api.github.com/repos/${this.config.repoFullName}/git/trees/${this.config.branch}?recursive=1`;
+    const res = await fetch(url, { headers: this.requestHeaders });
 
     if (!res.ok) {
       throw new Error(
@@ -104,8 +97,6 @@ export class Github {
       );
     }
 
-    const data = await res.json();
-
-    return data;
+    return await res.json();
   }
 }
