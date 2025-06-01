@@ -9,14 +9,15 @@ require("dotenv").config(); // Loads .env file where your GitHub token should be
 // Create a new DocuifyEngine instance with GitHub as the source
 const engine = new DocuifyEngine({
   source: new Github({
-    branch: "main",                 // Git branch to fetch files from
-    repoFullName: "itszavier/typemark-test-doc", // GitHub repo full name: owner/repo
-    path: "docs",                  // Folder path inside the repo to read files from
-    token: process.env.token,      // GitHub personal access token from environment variable
+    branch: "main", // Git branch to fetch files from
+    repoFullName: "itszavier/typemark-test-doc", // GitHub repo full name: owner/repo                  // Folder path inside the repo to read files from
+    token: process.env.token, // GitHub personal access token from environment variable
   }),
   plugins: [
-    new FrontMatterPlugin(),       // Plugin to parse YAML frontmatter in markdown files
+    new FrontMatterPlugin(), // Plugin to parse YAML frontmatter in markdown files
   ],
+  
+  filter: (file) => file.path.startsWith("docs"),
 });
 
 (async () => {

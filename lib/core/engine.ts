@@ -1,12 +1,13 @@
 import { BasePlugin } from "../base/basePlugin";
 import { BaseSource } from "../base/baseSource";
 import { buildTree } from "../utils/buildtree";
-import { DocuifyNode } from "../base/types";
+import { DocuifyNode, SourceFile } from "../base/types";
 import { walkTreeWithPlugins } from "../utils/walk_tree_with_plugins";
 
 export interface DocuifyEngineConfig {
   source: BaseSource;
   plugins?: BasePlugin[];
+  filter?: (file: SourceFile, index?: number) => boolean;
 }
 
 export class DocuifyEngine {
@@ -20,7 +21,7 @@ export class DocuifyEngine {
     }
 
     this.config = {
-      source: config.source,
+      ...config,
       plugins: config.plugins || [], // If no plugins are passed, we roll solo.
     };
   }
@@ -47,8 +48,14 @@ export class DocuifyEngine {
   async buildTree(): Promise<DocuifyNode> {
     const sourceFileData = await this.config.source.fetch();
 
+    let items = sourceFileData.items;
+
+    if (this.config.filter) {
+      items = items.filter((file, index) => this.config.filter!(file, index));
+    }
     // Fetches the files and constructs a glorious tree — like Minecraft but less cubes, more TypeScript.
-    this.tree = buildTree(sourceFileData.items);
+    this.tree = buildTree(items);
+
     return this.tree;
   }
 

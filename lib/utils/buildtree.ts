@@ -51,6 +51,7 @@ export function buildTree(sourceFiles: SourceFile[]): DocuifyNode {
           found.children = [];
         } else {
           found.content = file.content;
+          found.extension = file.extension
         }
 
         current.children.push(found);

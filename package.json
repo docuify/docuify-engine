@@ -33,14 +33,13 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@docuify/engine": "file:docuify-engine-1.0.0.tgz",
+    "@docuify/engine": "file:docuify-engine-0.1.0.tgz",
     "@types/node": "^22.15.29",
     "dotenv": "^16.5.0",
     "tsup": "^8.5.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },
-  
   "dependencies": {
     "gray-matter": "^4.0.3"
   }

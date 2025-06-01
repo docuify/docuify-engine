@@ -1,11 +1,10 @@
 import { BaseSource } from "../base/baseSource";
 import { SourceFileData, SourceFile } from "../base/types";
-
+import getFileExtension from "../utils/extract_file_ext";
 interface GithubSourceConfig {
   token: string;
   branch: string;
   repoFullName: string; // like "owner/repo"
-  path: string;
   github_api_version?: string;
   metadataFields?: string[]; // new optional list of fields to include in metadata
 }
@@ -18,12 +17,7 @@ export class Github extends BaseSource {
   constructor(config: GithubSourceConfig) {
     super();
     // Validate the configuration like a TSA agent on a caffeine rush
-    if (
-      !config.token ||
-      !config.branch ||
-      !config.repoFullName ||
-      !config.path
-    ) {
+    if (!config.token || !config.branch || !config.repoFullName) {
       throw new Error("Invalid config passed to Github source.");
     }
 
@@ -33,13 +27,12 @@ export class Github extends BaseSource {
   override async fetch(): Promise<SourceFileData> {
     // Step 1: Grab the entire file tree from GitHub
     //
-    
+
     const data = await this.request();
 
     // Step 2: Parse that chaotic mess into something actually usable
     const parsedData = await this.parse(data.tree);
 
- 
     return { source: "github", items: parsedData };
   }
 
@@ -54,39 +47,37 @@ export class Github extends BaseSource {
     const fields = this.config.metadataFields || ["sha"];
 
     return await Promise.all(
-      data
-        .filter((item) => item.path?.startsWith(this.config.path))
-        .map(async (item) => {
-          const isFolder = item.type === "tree";
+      data.map(async (item) => {
+        const isFolder = item.type === "tree";
 
-          // Pick only specified fields into metadata
-          const metadata: Record<string, any> = {};
+        // Pick only specified fields into metadata
+        const metadata: Record<string, any> = {};
 
-          for (const field of fields) {
-            if (field in item) {
-              metadata[field] = item[field];
-            }
+        for (const field of fields) {
+          if (field in item) {
+            metadata[field] = item[field];
           }
-          const base: SourceFile = {
-            path: item.path,
-            type: isFolder ? "folder" : "file",
-            metadata,
-          };
+        }
+        const base: SourceFile = {
+          path: item.path,
+          type: isFolder ? "folder" : "file",
+          metadata,
+        };
 
-          if (isFolder) {
-            return base;
-          }
+        if (isFolder) {
+          return base;
+        }
 
-          try {
-            const content = await this.fetchFileContent(item.path);
-            return { ...base, content };
-          } catch (err) {
-            // File failed to load? Panic! 🔥
-            throw new Error(
-              `Failed to fetch content for ${item.path}: ${(err as Error).message}`,
-            );
-          }
-        }),
+        try {
+          const content = await this.fetchFileContent(item.path);
+          return { ...base, content, extension: getFileExtension(item.path) };
+        } catch (err) {
+          // File failed to load? Panic! 🔥
+          throw new Error(
+            `Failed to fetch content for ${item.path}: ${(err as Error).message}`,
+          );
+        }
+      }),
     );
   }
 
