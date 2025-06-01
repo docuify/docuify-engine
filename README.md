@@ -40,7 +40,7 @@ const engine = new DocuifyEngine({
   source: new Github({
     branch: "main",                        // Branch to fetch from
     repoFullName: "username/repository",   // GitHub repository
-    path: "docs",                          // Path inside the repo
+    filter: (file) => file.startWith('docs'),                       // Path inside the repo
     token: process.env.GITHUB_TOKEN,       // GitHub access token
   }),
   plugins: [
