@@ -13,6 +13,10 @@ export abstract class BasePlugin {
    * Runs before the tree traversal starts.
    * Can return a new root node or nothing.
    */
+
+  abstract name: string;
+
+  
   applyBefore?(
     root: DocuifyNode,
     state: Record<string, any>,

@@ -15,11 +15,10 @@
       "import": "./dist/core/index.mjs"
     },
     "./plugins": {
-      "types": "./dist/core/index.d.ts",
+      "types": "./dist/plugins/index.d.ts",
       "require": "./dist/plugins/index.js",
-      "import": "./dist/core/index.mjs"
+      "import": "./dist/plugins/index.mjs"
     },
-    
     "./source": {
       "types": "./dist/sources/index.d.ts",
       "require": "./dist/sources/index.js",
