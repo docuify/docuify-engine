@@ -45,26 +45,50 @@ Think of it as a Swiss Army knife for your file trees — sharp, versatile, and 
 ## Quick Example
 
 ```ts
-import { DocuifyEngine } from "docuify-engine";
-import { GitHubSource } from "docuify-source-github";
-import { FrontmatterPlugin } from "docuify-plugin-frontmatter";
-import { SidebarIndexPlugin } from "docuify-plugin-sidebar-index";
+/**
+ * This script:
+ * 1. Connects to a GitHub repository and fetches files from a specified path and branch.
+ * 2. Builds a tree structure representing the folder and file hierarchy of the source.
+ * 3. Applies plugins (like FrontMatterPlugin) to transform or extract metadata from files.
+ * 4. Returns a structured object that contains the processed content tree.
+ * 5. Prints the complete tree with colors for easier inspection.
+ */
 
+const { Github } = require("@docuify/engine/source");         // GitHub source implementation to fetch files
+const { DocuifyEngine } = require("@docuify/engine");         // Core engine that builds and processes the tree
+const { FrontMatterPlugin } = require("@docuify/engine/plugins"); // Plugin to parse YAML frontmatter in files
+const { inspect } = require("util");                           // Node util for pretty console output
+require("dotenv").config();                                    // Load environment variables from .env
+
+// Initialize DocuifyEngine with GitHub source and FrontMatter plugin
 const engine = new DocuifyEngine({
-  source: new GitHubSource({ repo: "user/repo" }),
+  source: new Github({
+    branch: "main",                      // Which branch to fetch files from
+    repoFullName: "itszavier/typemark-test-doc", // GitHub repo to read files from
+    path: "docs",                       // Path inside the repo to scan files
+    token: process.env.token,           // GitHub access token for authentication (required for private repos or higher rate limits)
+  }),
   plugins: [
-    new FrontmatterPlugin(),
-    new SidebarIndexPlugin(),
+    new FrontMatterPlugin(),            // This plugin extracts YAML frontmatter metadata from markdown files
   ],
 });
 
-const { tree, foot } = await engine.build();
+(async () => {
+  try {
+    // Step 1 & 2: Fetch files from GitHub and build a hierarchical tree structure representing folders and files.
+    // Step 3: Walk through the tree applying each plugin, transforming or augmenting the nodes.
+    // Step 4: Return an object containing the final processed tree, source info, and applied plugin names.
+    const result = await engine.build();
 
-console.log("Tree built with plugins:", tree);
-console.log("Used plugins:", foot.pluginNames);
+    // Step 5: Log the entire processed tree to the console in a readable, colorized format.
+    console.log(inspect(result, { depth: null, colors: true }));
+  } catch (error) {
+    // Catch and log errors that occur during fetching, building, or plugin application.
+    console.error("Error fetching or processing data from GitHub source:", error);
+  }
+})();
+
 ````
-
-
 
 ## What’s Next?
 
@@ -79,7 +103,7 @@ Docuify Engine is **headless by design**, ready for contributions, and eager to 
 
 
 
-Feel free to open issues, submit PRs, or just hang out in discussions. Let’s build something awesome together!
+Feel free to open issues, submit PRs, or just hang out in discussions.
 
 
 

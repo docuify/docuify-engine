@@ -6,3 +6,6 @@ lib
 .gitignore
 .tsconfig.json
 .tsup.config.js
+
+
+*.tgz
