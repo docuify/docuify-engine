@@ -171,6 +171,6 @@ Contributions are welcome! Feel free to open issues, submit PRs, or join discuss
 
 [MIT](https://opensource.org/licenses/MIT) - See LICENSE file for details.
 
----
+
 
 © 2025 Docuify Engine — made with ❤️ and a pinch of curiosity.
