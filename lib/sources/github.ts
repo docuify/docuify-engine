@@ -33,13 +33,13 @@ export class Github extends BaseSource {
   override async fetch(): Promise<SourceFileData> {
     // Step 1: Grab the entire file tree from GitHub
     //
-    console.log("soruce is fetching...");
+    
     const data = await this.request();
 
     // Step 2: Parse that chaotic mess into something actually usable
     const parsedData = await this.parse(data.tree);
 
-    console.log("Done fetching", parsedData);
+ 
     return { source: "github", items: parsedData };
   }
 

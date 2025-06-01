@@ -6,7 +6,6 @@ export class FrontMatterPlugin extends BasePlugin {
  
   constructor() {
     super();
-    console.log("running", this.name);
   }
 
   override onVisit(node: DocuifyNode, context: TraversalContext): void | Promise<void> {
