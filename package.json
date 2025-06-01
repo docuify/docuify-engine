@@ -1,50 +1,43 @@
 {
   "name": "@docuify/engine",
   "version": "1.0.0",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
     },
     "./core": {
-      "require": "./dist/core/index.cjs",
-      "import": "./dist/core/index.js",
-      "types": "./dist/core/index.d.ts"
+      "types": "./dist/core/index.d.ts",
+      "require": "./dist/core/index.js",
+      "import": "./dist/core/index.mjs"
     },
-    "./core/baseSource": {
-      "require": "./dist/core/baseSource.cjs",
-      "import": "./dist/core/baseSource.js",
-      "types": "./dist/core/baseSource.d.ts"
+    "./plugins": {
+      "types": "./dist/core/index.d.ts",
+      "require": "./dist/plugins/index.js",
+      "import": "./dist/core/index.mjs"
     },
-    "./core/engine": {
-      "require": "./dist/core/engine.cjs",
-      "import": "./dist/core/engine.js",
-      "types": "./dist/core/engine.d.ts"
-    },
+    
     "./source": {
-      "require": "./dist/sources/index.cjs",
-      "import": "./dist/sources/index.js",
-      "types": "./dist/sources/index.d.ts"
-    },
-    "./source/github": {
-      "require": "./dist/sources/github.cjs",
-      "import": "./dist/sources/github.js",
-      "types": "./dist/sources/github.d.ts"
+      "types": "./dist/sources/index.d.ts",
+      "require": "./dist/sources/index.js",
+      "import": "./dist/sources/index.mjs"
     }
   },
   "scripts": {
-    "build": "npx tsup"
+    "build": "npx tsup",
+    "test": "node ./tests/index.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@docuify/engine": "file:docuify-engine-1.0.0.tgz",
+    "@types/node": "^22.15.29",
     "dotenv": "^16.5.0",
+    "gray-matter": "^4.0.3",
     "tsup": "^8.5.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
