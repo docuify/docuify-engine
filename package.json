@@ -29,9 +29,29 @@
     "build": "npx tsup",
     "test": "node ./tests/index.js"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Imani Brown",
+  "license": "MIT",
+  "description": "A flexible, pluggable engine for building and transforming documentation content from source files.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/docuify/docuify-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/docuify/docuify-engine/issues"
+  },
+  "homepage": "https://github.com/docuify/docuify-engine#readme",
+  "keywords": [
+    "docuify",
+    "documentation",
+    "engine",
+    "plugin-system",
+    "static-docs",
+    "markdown",
+    "tree-parser",
+    "developer-tools",
+    "open-source",
+    "typescript"
+  ],
   "devDependencies": {
     "@docuify/engine": "file:docuify-engine-0.1.0.tgz",
     "@types/node": "^22.15.29",
