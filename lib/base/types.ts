@@ -1,6 +1,5 @@
 export type SourceFile = {
   path: string;
-  sha: string;
   type: "folder" | "file";
   content?: string;
   metadata?: Record<string, any>; // Metadata is now standard; include {} if unused
@@ -19,5 +18,6 @@ export interface DocuifyNode {
   children?: DocuifyNode[];
   content?: string;
   parentId?: string;
+  metadata?: Record<string, any>;
   [key: string]: any;
 }

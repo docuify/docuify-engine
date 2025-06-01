@@ -2,7 +2,7 @@ import { BasePlugin, DocuifyNode, TraversalContext } from "../base";
 import matter from "gray-matter";
 
 export class FrontMatterPlugin extends BasePlugin {
-  override name = "FrontMatterPlugin";
+  override name = "_FrontMatterPlugin";
  
   constructor() {
     super();

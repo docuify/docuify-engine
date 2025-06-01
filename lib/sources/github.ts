@@ -7,9 +7,12 @@ interface GithubSourceConfig {
   repoFullName: string; // like "owner/repo"
   path: string;
   github_api_version?: string;
+  metadataFields?: string[]; // new optional list of fields to include in metadata
 }
 
 export class Github extends BaseSource {
+  override name = "_Github";
+
   config: GithubSourceConfig;
 
   constructor(config: GithubSourceConfig) {
@@ -27,7 +30,7 @@ export class Github extends BaseSource {
     this.config = config;
   }
 
-  async fetch(): Promise<SourceFileData> {
+  override async fetch(): Promise<SourceFileData> {
     // Step 1: Grab the entire file tree from GitHub
     //
     console.log("soruce is fetching...");
@@ -48,15 +51,26 @@ export class Github extends BaseSource {
   }
 
   private async parse(data: any[]): Promise<SourceFile[]> {
+    const fields = this.config.metadataFields || ["sha"];
+
     return await Promise.all(
       data
         .filter((item) => item.path?.startsWith(this.config.path))
         .map(async (item) => {
           const isFolder = item.type === "tree";
+
+          // Pick only specified fields into metadata
+          const metadata: Record<string, any> = {};
+
+          for (const field of fields) {
+            if (field in item) {
+              metadata[field] = item[field];
+            }
+          }
           const base: SourceFile = {
             path: item.path,
-            sha: item.sha,
             type: isFolder ? "folder" : "file",
+            metadata,
           };
 
           if (isFolder) {

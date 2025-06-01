@@ -37,6 +37,14 @@ export function buildTree(sourceFiles: SourceFile[]): DocuifyNode {
           fullPath: parts.slice(0, i + 1).join("/"),
           type: !isLast ? "folder" : file.type,
           parentId: current.id,
+          // We only attach metadata to files, not folders. Why? Because folders on GitHub can have metadata like SHAs,
+          // but that info can get tricky and cause inaccuracies when building the tree structure.
+          // So for now, we keep it simple and clean by only assigning metadata to actual files.
+          // We'll handle the folder metadata drama later — nobody likes messy data!
+          metadata:
+            isLast && file.type === "file" && file.metadata
+              ? { ...file.metadata }
+              : undefined,
         };
 
         if (!isLast || found.type === "folder") {
