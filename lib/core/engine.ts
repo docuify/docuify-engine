@@ -15,33 +15,61 @@ export class DocuifyEngine {
 
   constructor(config: DocuifyEngineConfig) {
     if (!config.source) {
+      // Like making cereal without milk — you technically can, but should you?
       throw new Error("DocuifyEngine requires a source.");
     }
 
     this.config = {
       source: config.source,
-      plugins: config.plugins || [],
+      plugins: config.plugins || [], // If no plugins are passed, we roll solo.
+    };
+  }
+
+  private get fetchBuild() {
+    const pluginNames = this.config.plugins!.map((plugin) => plugin.name);
+
+    return {
+      // "head" is for fancy metadata like commit hashes, timestamps, and other lore.
+      // It's empty now — like your brain at 3am debugging a tree traversal bug.
+      head: {},
+
+      // The sacred tree of knowledge — built from your source files, probably way too nested.
+      tree: this.tree,
+
+      // "foot" is the outro track. It tells you where the tree came from and what plugins danced on it.
+      foot: {
+        source: this.config.source.name,
+        pluginNames: pluginNames,
+      },
     };
   }
 
   async buildTree(): Promise<DocuifyNode> {
     const sourceFileData = await this.config.source.fetch();
+
+    // Fetches the files and constructs a glorious tree — like Minecraft but less cubes, more TypeScript.
     this.tree = buildTree(sourceFileData.items);
     return this.tree;
   }
 
   async applyPlugins(): Promise<DocuifyNode> {
+    // Walk the tree like a peaceful monk... except the plugins are allowed to mutate it like a mad scientist.
     this.tree = await walkTreeWithPlugins(this.tree, this.config.plugins!);
     return this.tree;
   }
 
   getTree(): DocuifyNode {
+    // Grab the tree like you're checking in on your Tamagotchi.
     return this.tree;
   }
-  /** Convenience method: builds the tree and applies all plugins in order */
-  async build(): Promise<DocuifyNode> {
+
+  /**
+   * Convenience method: builds the tree and applies all plugins in order.
+   * It's like making coffee and also adding creamer automatically — one command, good vibes.
+   */
+  async build() {
     await this.buildTree();
     await this.applyPlugins();
-    return this.tree;
+    return this.fetchBuild;
   }
 }
