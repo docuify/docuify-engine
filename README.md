@@ -1,113 +1,176 @@
-
 # Docuify Engine
 
 [![npm version](https://img.shields.io/npm/v/@docuify/engine)](https://www.npmjs.com/package/@docuify/engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
 > A flexible, pluggable engine for building and transforming documentation content from source files.
 
+## Overview
 
+Docuify Engine is a TypeScript-first library that simplifies working with documentation structures. It fetches content from various sources, organizes it into a structured tree, and allows plugin-based transformations to enhance or modify the content.
 
-## Why I’m Building This
+This is a **headless** solution by design - Docuify Engine handles the content organization and transformation pipeline, while leaving the rendering entirely up to you.
 
-This started as a **learning experience** — I wanted to figure out how to fetch, organize, and transform content from repositories cleanly, especially from GitHub.
+## Features
 
-To my surprise, what I built turned out to be pretty powerful and flexible! It’s not just for documentation — with the right source, Docuify Engine can parse and organize *any* folder and file structure.
+- 📁 **Source Adapters**: Fetch content from various sources (currently supports GitHub, more coming)
+- 🌲 **Tree Builder**: Automatically converts flat file lists into hierarchical tree structures
+- 🔌 **Plugin System**: Transform content with a flexible plugin architecture
+- 🧠 **Metadata Preservation**: Maintain context and metadata throughout the pipeline
+- 🚀 **TypeScript First**: Built with TypeScript, providing fully typed APIs and excellent IDE integration
+- 📦 **Module Support**: Compatible with both ESM and CommonJS
 
-Right now, it’s a standalone package (not yet plugged into my main project), but I wanted to open source it early for others who might find it useful or want to contribute.
+## Installation
 
-Docuify Engine is designed to be reusable and pluggable, giving developers full control over content architecture without locking them into any specific platform or stack.
-
-Think of it as a Swiss Army knife for your file trees — sharp, versatile, and ready for anything (except opening actual bottles, for now).
-
-
-
-## What Docuify Engine Does
-
-- 📁 Converts source files into a neat tree structure
-- 🔌 Lets you transform the tree with plugins (because who doesn’t love plugins?)
-- 🧠 Keeps metadata and context intact
-- 🚫 Leaves rendering up to you — it’s all about content, not style
-
-
-
-## Use Cases
-
-- Custom docs platforms
-- Markdown engines
-- Learning tools
-- Static site generators
-- Knowledge base apps
-- Any project that needs to wrangle structured content with ease
-
+```bash
+npm install @docuify/engine
+```
 
 ## Quick Example
 
-```ts
-/**
- * This script:
- * 1. Connects to a GitHub repository and fetches files from a specified path and branch.
- * 2. Builds a tree structure representing the folder and file hierarchy of the source.
- * 3. Applies plugins (like FrontMatterPlugin) to transform or extract metadata from files.
- * 4. Returns a structured object that contains the processed content tree.
- * 5. Prints the complete tree with colors for easier inspection.
- */
+```typescript
+const { Github } = require("@docuify/engine/source");         // Source adapter for GitHub
+const { DocuifyEngine } = require("@docuify/engine");         // Core engine
+const { FrontMatterPlugin } = require("@docuify/engine/plugins"); // Process frontmatter in markdown
+const { inspect } = require("util");                          // For pretty console output
+require("dotenv").config();                                   // Load environment variables
 
-const { Github } = require("@docuify/engine/source");         // GitHub source implementation to fetch files
-const { DocuifyEngine } = require("@docuify/engine");         // Core engine that builds and processes the tree
-const { FrontMatterPlugin } = require("@docuify/engine/plugins"); // Plugin to parse YAML frontmatter in files
-const { inspect } = require("util");                           // Node util for pretty console output
-require("dotenv").config();                                    // Load environment variables from .env
-
-// Initialize DocuifyEngine with GitHub source and FrontMatter plugin
+// Initialize DocuifyEngine with a source and plugins
 const engine = new DocuifyEngine({
   source: new Github({
-    branch: "main",                      // Which branch to fetch files from
-    repoFullName: "itszavier/typemark-test-doc", // GitHub repo to read files from
-    path: "docs",                       // Path inside the repo to scan files
-    token: process.env.token,           // GitHub access token for authentication (required for private repos or higher rate limits)
+    branch: "main",                        // Branch to fetch from
+    repoFullName: "username/repository",   // GitHub repository
+    path: "docs",                          // Path inside the repo
+    token: process.env.GITHUB_TOKEN,       // GitHub access token
   }),
   plugins: [
-    new FrontMatterPlugin(),            // This plugin extracts YAML frontmatter metadata from markdown files
+    new FrontMatterPlugin(),               // Extract YAML frontmatter
   ],
 });
 
+// Build and process the content tree
 (async () => {
   try {
-    // Step 1 & 2: Fetch files from GitHub and build a hierarchical tree structure representing folders and files.
-    // Step 3: Walk through the tree applying each plugin, transforming or augmenting the nodes.
-    // Step 4: Return an object containing the final processed tree, source info, and applied plugin names.
     const result = await engine.build();
-
-    // Step 5: Log the entire processed tree to the console in a readable, colorized format.
     console.log(inspect(result, { depth: null, colors: true }));
   } catch (error) {
-    // Catch and log errors that occur during fetching, building, or plugin application.
-    console.error("Error fetching or processing data from GitHub source:", error);
+    console.error("Error:", error);
   }
 })();
+```
 
-````
+## Architecture
 
-## What’s Next?
+Docuify Engine is built around three core concepts:
 
-* 🎨 Pretty, colorful debug logs — because debugging should be fun, not sad
-* 🔍 Snapshot & diff utilities for smarter change tracking
-* ⚙️ Plugin presets to save time
-* 🌍 More source types (local files, ZIP archives, APIs)
+1. **Sources**: Adapters that fetch content from different locations
+2. **Tree Builder**: Converts flat file lists into hierarchical structures
+3. **Plugins**: Transform or enhance content within the tree
+
+### Content Flow
+
+```
+Source → Tree Builder → Plugins → Final Tree Structure
+```
+
+### Available Sources
+
+- **GitHub**: Fetch content from GitHub repositories
+
+### Available Plugins
+
+- **FrontMatter**: Extract YAML frontmatter from markdown files
+
+## API Reference
+
+### DocuifyEngine
+
+The main class that orchestrates the content pipeline.
+
+```typescript
+new DocuifyEngine({
+  source: BaseSource,           // Required: content source
+  plugins?: BasePlugin[],       // Optional: transformation plugins
+  filter?: (file, index) => boolean // Optional: filter source files
+})
+```
+
+#### Methods
+
+- `buildTree()`: Fetches content and builds the tree structure
+- `applyPlugins()`: Runs all plugins on the tree
+- `getTree()`: Returns the current tree
+- `build()`: Convenience method that runs buildTree and applyPlugins
+
+### BaseSource
+
+Abstract class for content sources. Implement this to create new sources.
+
+### BasePlugin
+
+Abstract class for plugins. Extend this to create custom transformations.
+
+## Use Cases
+
+- Custom documentation platforms
+- Markdown-based content management
+- Knowledge base applications
+- Learning management systems
+- Static site generators
+- Any project that needs structured content organization
+
+## Why I Built This
+
+I created Docuify Engine as a learning experience to understand how to cleanly fetch, organize, and transform content from repositories, especially from GitHub.
+
+The resulting tool turned out to be surprisingly powerful and flexible - it's not limited to documentation but can parse and organize any folder and file structure with the appropriate source adapter.
+
+## TypeScript Support
+
+Docuify Engine is built with TypeScript and provides full type definitions for all its APIs. This enables:
+
+- Intelligent code completion in your IDE
+- Type checking to catch errors at compile time
+- Better documentation through type annotations
+- Improved developer experience with autocompletion
 
 
+## Module Support
 
-Docuify Engine is **headless by design**, ready for contributions, and eager to help you build better docs — or just organize your files — one node at a time.
+Docuify Engine supports both ESM (ECMAScript Modules) and CJS (CommonJS) import styles:
 
+### ESM (ES Modules)
 
+```typescript
+import { DocuifyEngine } from '@docuify/engine';
+import { Github } from '@docuify/engine/source';
+import { FrontMatterPlugin } from '@docuify/engine/plugins';
+```
 
-Feel free to open issues, submit PRs, or just hang out in discussions.
+### CJS (CommonJS)
 
+```typescript
+const { DocuifyEngine } = require('@docuify/engine');
+const { Github } = require('@docuify/engine/source');
+const { FrontMatterPlugin } = require('@docuify/engine/plugins');
+```
 
+## Roadmap
+
+- 🔄 Content diff and change tracking
+- 🎨 Improved debug logging
+- ⚙️ Plugin presets for common workflows
+- 🌍 Additional source adapters (local files, GitLab, Bitbucket, etc.)
+- 📦 More plugins for content transformation
+
+## Contributing
+
+Contributions are welcome! Feel free to open issues, submit PRs, or join discussions.
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT) - See LICENSE file for details.
+
+---
 
 © 2025 Docuify Engine — made with ❤️ and a pinch of curiosity.
-
-
-
