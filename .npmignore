@@ -1,4 +1,8 @@
 tests
+lib
+
+
 .env
 .gitignore
-lib
+.tsconfig.json
+.tsup.config.js

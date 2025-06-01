@@ -1,6 +1,6 @@
 {
   "name": "@docuify/engine",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -36,9 +36,12 @@
     "@docuify/engine": "file:docuify-engine-1.0.0.tgz",
     "@types/node": "^22.15.29",
     "dotenv": "^16.5.0",
-    "gray-matter": "^4.0.3",
     "tsup": "^8.5.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
+  },
+  
+  "dependencies": {
+    "gray-matter": "^4.0.3"
   }
 }
