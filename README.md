@@ -1,7 +1,7 @@
 
 # Docuify Engine
 
-[![npm version](https://img.shields.io/npm/l/@docuify/engine)](https://www.npmjs.com/package/@docuify/engine)
+[![npm version](https://img.shields.io/npm/v/@docuify/engine)](https://www.npmjs.com/package/@docuify/engine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
