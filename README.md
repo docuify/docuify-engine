@@ -39,13 +39,13 @@ require("dotenv").config();                                   // Load environmen
 const engine = new DocuifyEngine({
   source: new Github({
     branch: "main",                        // Branch to fetch from
-    repoFullName: "username/repository",   // GitHub repository
-    filter: (file) => file.startWith('docs'),                       // Path inside the repo
+    repoFullName: "username/repository",   // GitHub repository                 
     token: process.env.GITHUB_TOKEN,       // GitHub access token
   }),
   plugins: [
     new FrontMatterPlugin(),               // Extract YAML frontmatter
   ],
+ filter: (file) => file.startWith('docs'),  
 });
 
 // Build and process the content tree
