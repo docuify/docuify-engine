@@ -6,6 +6,9 @@ export type SourceFile = {
   metadata?: Record<string, any>; // Metadata is now standard; include {} if unused
 };
 
+/** @deprecated
+ * @description no longer needed
+ */
 export type SourceFileData = {
   source: string; // e.g. "github", "gitlab", "bitbucket", "gdrive", "neuralNet-vault9000"
   items: SourceFile[];
