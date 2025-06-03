@@ -45,7 +45,7 @@ const engine = new DocuifyEngine({
   plugins: [
     new FrontMatterPlugin(),               
   ],
-  filter: (file) => file.startsWith('docs'),
+  filter: (file) => file.path.startsWith('docs'),
 });
 
 // Build and process the content tree
