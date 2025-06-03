@@ -117,7 +117,7 @@ new DocuifyEngine({
 
 ### BaseSource
 
-Abstract class for content sources. Implement this to create new sources.
+Abstract class for content sources. Extend this to create new sources.
 
 ### BasePlugin  
 
