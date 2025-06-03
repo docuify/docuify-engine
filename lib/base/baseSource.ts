@@ -1,8 +1,7 @@
-import { SourceFileData } from "./types";
-
+import { SourceFile } from "./types";
 
 // Base class every source should implement. No freeloaders allowed.
 export abstract class BaseSource {
   abstract name: string;
-  abstract fetch(): Promise<SourceFileData>;
+  abstract fetch(): SourceFile[] | Promise<SourceFile[]>;
 }

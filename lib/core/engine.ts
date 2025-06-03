@@ -46,9 +46,9 @@ export class DocuifyEngine {
   }
 
   async buildTree(): Promise<DocuifyNode> {
-    const sourceFileData = await this.config.source.fetch();
+    const sourceFiles = await this.config.source.fetch();
 
-    let items = sourceFileData.items;
+    let items = sourceFiles;
 
     if (this.config.filter) {
       items = items.filter((file, index) => this.config.filter!(file, index));

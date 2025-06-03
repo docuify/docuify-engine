@@ -24,7 +24,7 @@ export class Github extends BaseSource {
     this.config = config;
   }
 
-  override async fetch(): Promise<SourceFileData> {
+  override async fetch(): Promise<SourceFile[]> {
     // Step 1: Grab the entire file tree from GitHub
     //
 
@@ -33,7 +33,7 @@ export class Github extends BaseSource {
     // Step 2: Parse that chaotic mess into something actually usable
     const parsedData = await this.parse(data.tree);
 
-    return { source: "github", items: parsedData };
+    return parsedData;
   }
 
   private get requestHeaders() {
