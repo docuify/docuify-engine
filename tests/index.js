@@ -31,7 +31,7 @@ const engine = new DocuifyEngine({
       result.nodes
         .filter((node) => node.type === "file")
         .map(async (node) => {
-          const content = await node.action?.loadContent();
+          const content = await node.actions?.loadContent();
           return {
             ...node,
             content: content,

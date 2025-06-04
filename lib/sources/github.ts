@@ -10,7 +10,7 @@ interface GithubSourceConfig {
 }
 
 export class Github extends BaseSource {
-  override name = "_Github";
+  override name = "Github";
 
   config: GithubSourceConfig;
 

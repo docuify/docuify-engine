@@ -76,7 +76,7 @@ function createFileNode(
     _contentTransformQueue: transformQueue,
 
     // All the file's special powers are grouped here. Transform, load, mutate!
-    action: {
+    actions: {
       useTransform: (fn: TransformerFunction) => {
         transformQueue.push(fn);
         console.log(`[TransformQueue] Added transform to ${file.path}`);

@@ -45,7 +45,7 @@ export interface DocuifyNode {
    * Public content actions exposed to plugins or consumers.
    * Includes ability to register transforms, apply them, and load content.
    */
-  action?: {
+  actions?: {
     /**
      * Adds a content transformation function to the internal queue.
      * These will be applied in the order they are added.

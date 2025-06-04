@@ -88,7 +88,10 @@ export class DocuifyEngine {
 
     await this.applyPlugins(); // Let plugins do their weird magic
 
-    const flatNodes = flattenTree(this.tree);
+    const flatNodes = flattenTree(this.tree).filter(
+      (node) => node.type !== "folder",
+    );
+    
     const pluginNames = this.config.plugins!.map((plugin) => plugin.name);
 
     return {
