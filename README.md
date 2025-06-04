@@ -402,9 +402,6 @@ import { FrontMatterPlugin } from '@docuify/engine/plugins';
 
 // All types are fully typed and provide excellent IntelliSense
 ```
-## Keywords
-
-`docuify`, `documentation`, `engine`, `plugin-system`, `static-docs`, `markdown`, `tree-parser`, `developer-tools`, `open-source`, `typescript`
 
 ## Dependencies
 
