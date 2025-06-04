@@ -4,103 +4,132 @@ import { buildTree } from "../utils/build_tree";
 import { flattenTree } from "../utils/flatten_tree";
 import { DocuifyNode, SourceFile } from "../base/types";
 import { walkTreeWithPlugins } from "../utils/walk_tree_with_plugins";
+import { QueryContext } from "./query_context";
+import { preloadTreeContent, preloadFlatNodesContent } from "../utils/preload";
 
 export interface DocuifyEngineConfig {
   source: BaseSource;
   plugins?: BasePlugin[];
   filter?: (file: SourceFile, index?: number) => boolean;
+  disableContentPreload?: boolean; // Optional supercharge mode
 }
 
+/**
+ * 🚂 DocuifyEngine — The central powerhouse of Docuify.
+ * Connect a source, run through plugins, flatten into gold.
+ */
 export class DocuifyEngine {
   private config: DocuifyEngineConfig;
   private tree!: DocuifyNode;
 
   constructor(config: DocuifyEngineConfig) {
     if (!config.source) {
-      // Like making cereal without milk — you technically can, but should you?
-      throw new Error("DocuifyEngine requires a source.");
+      throw new Error("DocuifyEngine requires a source. It's the whole point.");
     }
 
     this.config = {
       ...config,
-      plugins: config.plugins || [], // If no plugins are passed, we roll solo.
+      plugins: config.plugins || [], // If no plugins are passed, we still dance alone.
     };
   }
 
-  private get fetchBuild() {
-    const pluginNames = this.config.plugins!.map((plugin) => plugin.name);
+  private get buildResult() {
+    const pluginNames = this.config.plugins!.map((p) => p.name);
 
     return {
-      // "head" is for fancy metadata like commit hashes, timestamps, and other lore.
-      // It's empty now — like your brain at 3am debugging a tree traversal bug.
-      head: {},
-
-      // The sacred tree of knowledge — built from your source files, probably way too nested.
+      head: {}, // Reserved for future lore: commit hashes, timestamps, secrets...
       tree: this.tree,
-
-      // "foot" is the outro track. It tells you where the tree came from and what plugins danced on it.
       foot: {
         source: this.config.source.name,
-        pluginNames: pluginNames,
+        pluginNames,
       },
     };
   }
 
-  async buildTree(): Promise<DocuifyNode> {
-    const sourceFiles = await this.config.source.fetch();
+  /**
+   * Builds the Docuify tree from the source.
+   * Filters are applied here. Lazy loading is respected.
+   */
+  private async treeBuilder(): Promise<DocuifyNode> {
+    const rawFiles = await this.config.source.fetch();
+    const filteredFiles = this.config.filter
+      ? rawFiles.filter(this.config.filter)
+      : rawFiles;
 
-    let items = sourceFiles;
-
-    if (this.config.filter) {
-      items = items.filter((file, index) => this.config.filter!(file, index));
-    }
-    // Fetches the files and constructs a glorious tree — like Minecraft but less cubes, more TypeScript.
-    this.tree = buildTree(items);
-
-    return this.tree;
-  }
-
-  async applyPlugins(): Promise<DocuifyNode> {
-    // Walk the tree like a peaceful monk... except the plugins are allowed to mutate it like a mad scientist.
-    this.tree = await walkTreeWithPlugins(this.tree, this.config.plugins!);
-    return this.tree;
-  }
-
-  getTree(): DocuifyNode {
-    // Grab the tree like you're checking in on your Tamagotchi.
+    this.tree = buildTree(filteredFiles);
     return this.tree;
   }
 
   /**
-   * Convenience method: builds the tree and applies all plugins in order.
-   * It's like making coffee and also adding creamer automatically — one command, good vibes.
+   * Applies plugins to the tree. Plugins may mutate nodes, extract metadata, or summon demons.
    */
-  async build() {
-    await this.buildTree();
-    await this.applyPlugins();
-    return this.fetchBuild;
+  async applyPlugins(): Promise<DocuifyNode> {
+    this.tree = await walkTreeWithPlugins(this.tree, this.config.plugins!);
+    return this.tree;
   }
 
-  async flatBuild() {
-    if (!this.tree) {
-      await this.buildTree(); // Get the initial tree
+  /**
+   * Returns the current Docuify tree.
+   * Caution: this may return undefined if `buildTree` hasn’t run.
+   */
+  getTree(): DocuifyNode {
+    return this.tree;
+  }
+
+  /**
+   * One-click build: fetches source, builds tree, runs plugins.
+   * Think of it like `npm run build`, but for trees.
+   */
+  async buildTree() {
+    await this.treeBuilder();
+    await this.applyPlugins();
+
+    if (!this.config.disableContentPreload) {
+      await preloadTreeContent(this.tree);
     }
 
-    await this.applyPlugins(); // Let plugins do their weird magic
+    return this.buildResult;
+  }
+
+  /**
+   * Flattens the tree and returns only file nodes.
+   * Ideal for querying, indexing, or just skipping the forest to find your leaf.
+   */
+  async buildFlat() {
+    await this.treeBuilder(); // Don’t assume – trees don’t grow on assumptions
+    await this.applyPlugins();
 
     const flatNodes = flattenTree(this.tree).filter(
-      (node) => node.type !== "folder",
+      (node) => node.type === "file",
     );
-    
-    const pluginNames = this.config.plugins!.map((plugin) => plugin.name);
+
+    // Optional metadata preload step
+    if (!this.config.disableContentPreload) {
+      await preloadFlatNodesContent(flatNodes);
+    }
 
     return {
-      head: {}, // One day... maybe commit hashes, timestamps, or snacks
+      head: {},
       nodes: flatNodes,
       foot: {
         source: this.config.source.name,
-        pluginNames: pluginNames,
+        pluginNames: this.config.plugins!.map((p) => p.name),
       },
     };
+  }
+
+  use(base: BasePlugin | BaseSource) {
+    if (base && base instanceof BasePlugin) {
+      this.config.plugins!.push(base);
+    }
+
+    if (base && base instanceof BaseSource) {
+      this.config.source = base;
+    }
+  }
+
+   async query() {
+    const { nodes } = await this.buildFlat();
+    return new QueryContext(nodes);
   }
 }

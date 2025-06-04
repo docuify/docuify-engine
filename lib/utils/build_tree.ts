@@ -44,7 +44,7 @@ function createFileNode(
   // Applies all registered content transforms in order.
   async function transformContent(rawContent: string) {
     let result: string | Promise<string> = rawContent;
-    console.log("called");
+
     for (const transformFunction of transformQueue) {
       result = await transformFunction(result); // Let each plugin have its moment of glory.
     }
@@ -79,7 +79,7 @@ function createFileNode(
     actions: {
       useTransform: (fn: TransformerFunction) => {
         transformQueue.push(fn);
-        console.log(`[TransformQueue] Added transform to ${file.path}`);
+       
       },
       transformContent,
       loadContent,

@@ -61,6 +61,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "gray-matter": "^4.0.3"
+    "@types/lodash": "^4.17.17",
+    "gray-matter": "^4.0.3",
+    "lodash": "^4.17.21"
   }
 }
