@@ -1,24 +1,17 @@
-# Docuify Engine
+# @docuify/engine 🚂
 
-[![npm version](https://img.shields.io/npm/v/@docuify/engine)](https://www.npmjs.com/package/@docuify/engine)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-> A flexible, pluggable engine for building and transforming documentation content from source files.
-
-## Overview
-
-Docuify Engine is a TypeScript-first library that simplifies working with documentation structures. It fetches content from various sources, organizes it into a structured tree, and allows plugin-based transformations to enhance or modify the content.
-
-This is a **headless** solution by design — Docuify Engine handles the content organization and transformation pipeline, while leaving the rendering entirely up to you.
+A flexible, pluggable engine for building and transforming documentation content from source files. Fetch from GitHub, local files, or custom sources, then process through an extensible plugin system to build queryable documentation trees.
 
 ## Features
 
-- 📁 **Source Adapters** — Fetch content from various sources (GitHub supported, more coming)
-- 🌲 **Tree Builder** — Automatically converts flat file lists into hierarchical tree structures
-- 🔌 **Plugin System** — Transform content with a flexible plugin architecture
-- 🧠 **Metadata Preservation** — Maintain context and metadata throughout the pipeline
-- 🚀 **TypeScript First** — Built with TypeScript, providing fully typed APIs and excellent IDE integration
-- 📦 **Module Support** — Compatible with both ESM and CommonJS
+- **Multiple Sources**: GitHub repositories, local files, and extensible source system
+- **Plugin Architecture**: Transform content with a flexible plugin system
+- **Tree & Flat Structures**: Build hierarchical trees or flat lists for different use cases
+- **Lazy Loading**: Efficient content loading with transformation pipelines
+- **Query System**: Built-in querying capabilities for processed documentation
+- **Content Transformation**: Chain multiple content transformers (markdown, frontmatter, etc.)
+- **Modular Exports**: Import only what you need with granular exports
+- **TypeScript First**: Full TypeScript support with comprehensive type definitions
 
 ## Installation
 
@@ -28,306 +21,411 @@ npm install @docuify/engine
 
 ## Quick Start
 
-```typescript
-const { Github } = require("@docuify/engine/source");         
-const { DocuifyEngine } = require("@docuify/engine");         
-const { FrontMatterPlugin } = require("@docuify/engine/plugins");
-const { inspect } = require("util");                          
-require("dotenv").config();                                   
+```javascript
+import { DocuifyEngine } from '@docuify/engine';
+import { Github } from '@docuify/engine/source';
+import { FrontMatterPlugin } from '@docuify/engine/plugins';
 
-// Initialize DocuifyEngine with a source and plugins
+// Configure your documentation source
 const engine = new DocuifyEngine({
   source: new Github({
-    branch: "main",                        
-    repoFullName: "username/repository",   
-    token: process.env.GITHUB_TOKEN,       
+    token: 'your-github-token',
+    branch: 'main',
+    repoFullName: 'owner/repo'
   }),
   plugins: [
-    new FrontMatterPlugin(),               
-  ],
-  filter: (file) => file.startsWith('docs'),
+    new FrontMatterPlugin()
+  ]
 });
 
-// Build and process the content tree
-(async () => {
-  try {
-    const result = await engine.build();
-    console.log(inspect(result, { depth: null, colors: true }));
-  } catch (error) {
-    console.error("Error:", error);
-  }
-})();
+// Build documentation tree
+const result = await engine.buildTree();
+console.log(result.tree);
+
+// Or get flat structure for querying
+const flatResult = await engine.buildFlat();
+console.log(flatResult.nodes);
 ```
 
-## Architecture
+## Import Patterns
 
-Docuify Engine is built around three core concepts:
+The package provides modular exports for optimal bundle size:
 
-### Core Components
+```javascript
+// Main engine
+import { DocuifyEngine } from '@docuify/engine';
 
-1. **Sources** — Adapters that fetch content from different locations
-2. **Tree Builder** — Converts flat file lists into hierarchical structures  
-3. **Plugins** — Transform or enhance content within the tree
+// Core types and base classes
+import { BasePlugin, BaseSource, DocuifyNode } from '@docuify/engine/core';
 
-### Content Flow
+// Sources
+import { Github, LocalFile } from '@docuify/engine/source';
 
+// Plugins
+import { FrontMatterPlugin } from '@docuify/engine/plugins';
+
+// Everything (not recommended for production)
+import * as Docuify from '@docuify/engine';
 ```
-Source → Tree Builder → Plugins → Final Tree Structure
-```
 
-## Available Components
+## Core Concepts
 
 ### Sources
 
-| Source | Description | Status |
-|--------|-------------|--------|
-| **GitHub** | Fetch content from GitHub repositories | ✅ Available |
-| **Local Files** | Read from local filesystem | 🔄 Planned |
-| **GitLab** | Fetch from GitLab repositories | 🔄 Planned |
-| **Bitbucket** | Fetch from Bitbucket repositories | 🔄 Planned |
+Sources fetch documentation files from various locations:
+
+#### GitHub Source
+```javascript
+import { Github } from '@docuify/engine/source';
+
+const githubSource = new Github({
+  token: 'your-github-token',
+  branch: 'main',
+  repoFullName: 'owner/repo',
+  github_api_version: '2022-11-28', // optional
+  metadataFields: ['sha', 'size'] // optional metadata to include
+});
+```
+
+#### Local File Source
+```javascript
+import { LocalFile } from '@docuify/engine/source';
+
+const localSource = new LocalFile('./docs');
+```
 
 ### Plugins
 
-| Plugin | Description | Status |
-|--------|-------------|--------|
-| **FrontMatter** | Extract YAML frontmatter from markdown files | ✅ Available |
+Plugins process nodes during tree traversal:
+
+#### Built-in FrontMatter Plugin
+```javascript
+import { FrontMatterPlugin } from '@docuify/engine/plugins';
+
+const frontmatterPlugin = new FrontMatterPlugin();
+```
+
+#### Custom Plugin
+```javascript
+import { BasePlugin } from '@docuify/engine/core';
+
+class MyCustomPlugin extends BasePlugin {
+  name = 'MyCustomPlugin';
+
+  // Optional: runs before traversal
+  async applyBefore(root, state) {
+    // Transform the entire tree before processing
+    return root;
+  }
+
+  // Required: runs on each node
+  async onVisit(node, context) {
+    if (node.type === 'file') {
+      // Add custom transformations
+      node.actions?.useTransform?.(async (content) => {
+        // Process content here
+        return content.toUpperCase();
+      });
+      
+      // Add custom metadata
+      node.customData = { processed: true };
+    }
+  }
+
+  // Optional: runs after traversal
+  async applyAfter(root, state) {
+    // Final tree modifications
+    return root;
+  }
+}
+```
 
 ## API Reference
 
 ### DocuifyEngine
 
-The main class that orchestrates the content pipeline.
+The main engine class that orchestrates the entire documentation processing pipeline.
 
-```typescript
-new DocuifyEngine({
-  source: BaseSource,                    // Required: content source
-  plugins?: BasePlugin[],                // Optional: transformation plugins
-  filter?: (file, index) => boolean      // Optional: filter source files
-})
+#### Constructor
+```javascript
+new DocuifyEngine(config)
 ```
+
+**Config Options:**
+- `source: BaseSource` - Required. The source to fetch files from
+- `plugins?: BasePlugin[]` - Optional array of plugins to apply
+- `filter?: (file, index) => boolean` - Optional filter function for source files
+- `disableContentPreload?: boolean` - Skip content preloading for performance
 
 #### Methods
 
-| Method | Description |
-|--------|-------------|
-| `buildTree()` | Fetches content and builds the tree structure |
-| `applyPlugins()` | Runs all plugins on the tree |
-| `getTree()` | Returns the current tree |
-| `build()` | Convenience method that runs buildTree and applyPlugins |
+##### `buildTree()`
+Builds a hierarchical documentation tree.
 
-### BaseSource
-
-Abstract class for content sources. Extend this to create new sources.
-
-### BasePlugin  
-
-Abstract class for plugins. Extend this to create custom transformations.
-
-## Module Support
-
-Docuify Engine supports both ESM and CommonJS import styles:
-
-### ESM (ES Modules)
-
-```typescript
-import { DocuifyEngine } from '@docuify/engine';
-import { Github } from '@docuify/engine/source';
-import { FrontMatterPlugin } from '@docuify/engine/plugins';
+```javascript
+const result = await engine.buildTree();
+// Returns: { head: {}, tree: DocuifyNode, foot: { source, pluginNames } }
 ```
 
-### CommonJS
+##### `buildFlat()`
+Builds a flat array of file nodes (folders excluded).
 
-```typescript
-const { DocuifyEngine } = require('@docuify/engine');
-const { Github } = require('@docuify/engine/source');
-const { FrontMatterPlugin } = require('@docuify/engine/plugins');
+```javascript
+const result = await engine.buildFlat();
+// Returns: { head: {}, nodes: DocuifyNode[], foot: { source, pluginNames } }
 ```
 
-## Creating Custom Components
+##### `query()`
+Returns a QueryContext for advanced querying.
 
-### Plugin System Deep Dive
-
-Plugins are called after the tree is built via the `applyPlugins()` method. The system walks through the entire tree and applies all plugins through a sophisticated three-phase lifecycle:
-
-1. **`applyBefore`** — Runs before tree traversal starts, can transform the entire tree
-2. **`onVisit`** — Runs on every node during traversal, allows per-node transformations  
-3. **`applyAfter`** — Runs after traversal completes, can perform final tree-wide operations
-
-The plugin system maintains shared state across all phases and supports both synchronous and asynchronous operations.
-
-#### Plugin Execution Flow
-
-```
-Source → buildTree() → applyPlugins() → [applyBefore → Tree Traversal + onVisit → applyAfter] → Final Tree
+```javascript
+const queryContext = await engine.query();
 ```
 
-### BasePlugin Interface
+##### `use(plugin)`
+Add a plugin or change the source.
 
-```typescript
-export abstract class BasePlugin {
+```javascript
+engine.use(new MyCustomPlugin());
+engine.use(new Github({...}));
+```
+
+##### `getTree()`
+Get the current tree (may be undefined before building).
+
+```javascript
+const tree = engine.getTree();
+```
+
+### DocuifyNode
+
+Represents a node in the documentation tree.
+
+#### Properties
+- `id: string` - Unique node identifier
+- `fullPath: string` - Complete file path
+- `name: string` - File or folder name
+- `type: 'file' | 'folder'` - Node type
+- `parentId?: string` - Parent node ID
+- `metadata?: Record<string, any>` - Custom metadata
+- `extension?: string | null` - File extension
+- `children?: DocuifyNode[]` - Child nodes (folders only)
+
+#### File Node Actions
+File nodes have special `actions` for content processing:
+
+```javascript
+// Add content transformation
+node.actions?.useTransform?.((content) => {
+  return content.replace(/old/g, 'new');
+});
+
+// Load and transform content
+const processedContent = await node.actions?.loadContent?.();
+
+// Transform existing content
+const transformed = await node.actions?.transformContent?.(rawContent);
+```
+
+### Sources
+
+#### BaseSource (Abstract)
+Base class for all sources.
+
+```javascript
+class MySource extends BaseSource {
+  name = 'MySource';
+  
+  async fetch() {
+    // Return SourceFile[]
+    return [{
+      path: 'example.md',
+      type: 'file',
+      extension: 'md',
+      metadata: { custom: 'data' },
+      loadContent: async () => 'file content'
+    }];
+  }
+}
+```
+
+#### SourceFile Type
+```javascript
+type SourceFile = {
+  path: string;                    // Relative path
+  type: 'folder' | 'file';        // File type
+  extension?: string | null;       // File extension
+  metadata?: Record<string, any>;  // Custom metadata
+  loadContent?: () => string | Promise<string>; // Lazy content loader
+}
+```
+
+### Plugins
+
+#### BasePlugin (Abstract)
+Base class for all plugins.
+
+```javascript
+abstract class BasePlugin {
   abstract name: string;
   
-  // Optional: Transform entire tree before traversal
-  applyBefore?(
-    root: DocuifyNode,
-    state: Record<string, any>,
-  ): DocuifyNode | void | Promise<DocuifyNode | void>;
-  
-  // Required: Process individual nodes during traversal
-  abstract onVisit(
-    node: DocuifyNode,
-    context: TraversalContext,
-  ): void | Promise<void>;
-  
-  // Optional: Transform entire tree after traversal
-  applyAfter?(
-    root: DocuifyNode,
-    state: Record<string, any>,
-  ): DocuifyNode | void | Promise<DocuifyNode | void>;
+  // Optional lifecycle hooks
+  applyBefore?(root: DocuifyNode, state: Record<string, any>): DocuifyNode | void | Promise<DocuifyNode | void>;
+  abstract onVisit(node: DocuifyNode, context: TraversalContext): void | Promise<void>;
+  applyAfter?(root: DocuifyNode, state: Record<string, any>): DocuifyNode | void | Promise<void>;
 }
 ```
 
-### TraversalContext
+#### TraversalContext
+Context object passed to plugin `onVisit` methods:
 
-Each `onVisit` call receives a context object with navigation and state information:
-
-```typescript
-export interface TraversalContext {
-  parent?: DocuifyNode;           // Direct parent node
-  ancestors: DocuifyNode[];       // All ancestor nodes
-  index?: number;                 // Position in parent's children array
-  visit(child: DocuifyNode, ctx: TraversalContext): void;  // Manual traversal control
-  state: Record<string, any>;     // Shared state across all plugins
+```javascript
+interface TraversalContext {
+  parent?: DocuifyNode;           // Parent node
+  ancestors: DocuifyNode[];       // Array of ancestor nodes
+  index?: number;                 // Index in parent's children
+  visit(child: DocuifyNode, ctx: TraversalContext): void; // Recursive visitor
+  state: Record<string, any>;     // Shared state between plugins
 }
 ```
 
-### Custom Plugin Example
+## Advanced Usage
 
-```typescript
-import { BasePlugin, DocuifyNode, TraversalContext } from "@docuify/engine";
-import matter from "gray-matter";
+### Custom Content Transformations
 
-export class FrontMatterPlugin extends BasePlugin {
-  override name = "_FrontMatterPlugin";
+```javascript
+// Chain multiple transformations
+node.actions?.useTransform?.(async (content) => {
+  // First transformation: process frontmatter
+  const { data, content: body } = matter(content);
+  node.frontmatter = data;
+  return body;
+});
 
-  constructor() {
-    super();
+node.actions?.useTransform?.(async (content) => {
+  // Second transformation: convert markdown to HTML
+  return markdownToHtml(content);
+});
+
+node.actions?.useTransform?.(async (content) => {
+  // Third transformation: syntax highlighting
+  return highlightCode(content);
+});
+```
+
+### Filtering Source Files
+
+```javascript
+const engine = new DocuifyEngine({
+  source: new Github({...}),
+  filter: (file) => {
+    // Only include markdown files
+    return file.extension === 'md';
   }
+});
+```
 
-  override onVisit(node: DocuifyNode, context: TraversalContext): void | Promise<void> {
-    if (node.type === "file" && node.content) {
-      try {
-        const { content, data } = matter(node.content);
-        node.content = content;
-        node.frontmatter = data;
-      } catch (err) {
-        throw new Error(`[${this.name}] Failed to parse frontmatter in "${node.fullPath}"\n\n${err}"`);
-      }
+### Performance Optimization
+
+```javascript
+const engine = new DocuifyEngine({
+  source: new Github({...}),
+  disableContentPreload: true, // Skip preloading for faster builds
+});
+
+// Manual content loading when needed
+const result = await engine.buildFlat();
+for (const node of result.nodes) {
+  if (needsContent(node)) {
+    const content = await node.actions?.loadContent?.();
+  }
+}
+```
+
+### Plugin State Sharing
+
+```javascript
+class AnalyticsPlugin extends BasePlugin {
+  name = 'AnalyticsPlugin';
+  
+  async applyBefore(root, state) {
+    state.fileCount = 0;
+    state.totalSize = 0;
+  }
+  
+  async onVisit(node, context) {
+    if (node.type === 'file') {
+      context.state.fileCount++;
+      const content = await node.actions?.loadContent?.();
+      context.state.totalSize += content.length;
     }
   }
+  
+  async applyAfter(root, state) {
+    console.log(`Processed ${state.fileCount} files (${state.totalSize} bytes)`);
+  }
 }
 ```
 
-### Advanced Plugin Example
+## Error Handling
+
+```javascript
+try {
+  const result = await engine.buildTree();
+} catch (error) {
+  if (error.message.includes('GitHub')) {
+    console.error('GitHub API error:', error);
+  } else if (error.message.includes('content')) {
+    console.error('Content loading error:', error);
+  } else {
+    console.error('Unknown error:', error);
+  }
+}
+```
+
+## TypeScript Support
+
+@docuify/engine is written in TypeScript and provides full type definitions:
 
 ```typescript
-export class TableOfContentsPlugin extends BasePlugin {
-  override name = "_TableOfContentsPlugin";
+import { 
+  DocuifyEngine, 
+  DocuifyNode, 
+  BasePlugin, 
+  TraversalContext,
+  SourceFile 
+} from '@docuify/engine';
 
-  // Initialize shared state before traversal
-  applyBefore(root: DocuifyNode, state: Record<string, any>): void {
-    state.tocItems = [];
-  }
+// Modular imports with full typing
+import { Github } from '@docuify/engine/source';
+import { FrontMatterPlugin } from '@docuify/engine/plugins';
 
-  // Collect TOC items during traversal
-  onVisit(node: DocuifyNode, context: TraversalContext): void {
-    if (node.type === "file" && node.extension === ".md") {
-      const headings = this.extractHeadings(node.content);
-      context.state.tocItems.push(...headings);
-    }
-  }
-
-  // Generate final TOC after traversal
-  applyAfter(root: DocuifyNode, state: Record<string, any>): void {
-    const tocContent = this.generateTOC(state.tocItems);
-    // Add TOC as a new node or metadata
-    root.metadata = { ...root.metadata, tableOfContents: tocContent };
-  }
-
-  private extractHeadings(content: string): any[] {
-    // Implementation details...
-    return [];
-  }
-
-  private generateTOC(items: any[]): string {
-    // Implementation details...
-    return "";
-  }
-}
+// All types are fully typed and provide excellent IntelliSense
 ```
+## Keywords
 
-### Custom Source Example
+`docuify`, `documentation`, `engine`, `plugin-system`, `static-docs`, `markdown`, `tree-parser`, `developer-tools`, `open-source`, `typescript`
 
-To create a new source, extend the BaseSource class. How you fetch the content is up to you, as long as you return the data in the expected format.
+## Dependencies
 
-```typescript
-import { BaseSource, SourceFile } from "@docuify/engine";
-
-export class Github extends BaseSource {
-  override name = "_Github";
-
-  override async fetch(): Promise<SourceFile[]> {
-    // Your fetching logic here
-    return []; // Return array of SourceFile objects
-  }
-}
-```
-
-### SourceFile Type
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `path` | `string` | ✅ | File or folder path |
-| `type` | `"folder" \| "file"` | ✅ | Type of the source item |
-| `content` | `string` | ❌ | File content (undefined for folders, only files have content) |
-| `extension` | `string \| null` | ❌ | File extension string, null if extension cannot be resolved for a file, undefined for folders |
-| `metadata` | `Record<string, any>` | ❌ | Additional metadata object |
-
-## Use Cases
-
-- Custom documentation platforms
-- Markdown-based content management systems
-- Knowledge base applications
-- Learning management systems
-- Static site generators
-- Any project requiring structured content organization
-
-## Background & Motivation
-
-I created Docuify Engine as both a learning experience and a foundational component for a larger project I'm working on. It started as a way to understand how to cleanly fetch, organize, and transform content from repositories, especially from GitHub.
-
-The resulting tool turned out to be surprisingly powerful and flexible — it's not limited to documentation but can parse and organize any folder and file structure with the appropriate source adapter, making it useful beyond its original scope.
-
-## Roadmap
-
-- 🔄 Content diff and change tracking
-- 🎨 Improved debug logging  
-- ⚙️ Plugin presets for common workflows
-- 🌍 Additional source adapters (local files, GitLab, Bitbucket, etc.)
-- 📦 More plugins for content transformation
+- **gray-matter**: YAML frontmatter parsing
+- **lodash**: Utility functions for data manipulation
+- **@types/lodash**: TypeScript definitions for lodash
 
 ## Contributing
 
-Contributions are welcome! Feel free to open issues, submit pull requests, or join discussions.
+When creating custom sources or plugins:
+
+1. **Sources**: Extend `BaseSource` and implement the `fetch()` method
+2. **Plugins**: Extend `BasePlugin` and implement the `onVisit()` method
+3. **Content Transformers**: Use the `useTransform` API for content processing
+4. **Metadata**: Attach custom data to nodes via the extensible `[key: string]: any` property
+
+## Issues & Support
+
+- **Bug Reports**: [GitHub Issues](https://github.com/docuify/docuify-engine/issues)
+- **Repository**: [GitHub Repository](https://github.com/docuify/docuify-engine)
 
 ## License
 
-[MIT](https://opensource.org/licenses/MIT) — See LICENSE file for details.
-
-## Author
-
-Created by Imani Brown — [GitHub](https://github.com/itszavier)
-
----
-
-© 2025 Docuify Engine — made with ❤️ and a pinch of curiosity.
+MIT License - see the [LICENSE](https://github.com/docuify/docuify-engine/blob/main/LICENSE) file for details.
