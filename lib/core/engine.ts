@@ -1,6 +1,7 @@
 import { BasePlugin } from "../base/basePlugin";
 import { BaseSource } from "../base/baseSource";
-import { buildTree } from "../utils/buildtree";
+import { buildTree } from "../utils/build_tree";
+import { flattenTree } from "../utils/flatten_tree";
 import { DocuifyNode, SourceFile } from "../base/types";
 import { walkTreeWithPlugins } from "../utils/walk_tree_with_plugins";
 
@@ -78,5 +79,25 @@ export class DocuifyEngine {
     await this.buildTree();
     await this.applyPlugins();
     return this.fetchBuild;
+  }
+
+  async flatBuild() {
+    if (!this.tree) {
+      await this.buildTree(); // Get the initial tree
+    }
+
+    await this.applyPlugins(); // Let plugins do their weird magic
+
+    const flatNodes = flattenTree(this.tree);
+    const pluginNames = this.config.plugins!.map((plugin) => plugin.name);
+
+    return {
+      head: {}, // One day... maybe commit hashes, timestamps, or snacks
+      nodes: flatNodes,
+      foot: {
+        source: this.config.source.name,
+        pluginNames: pluginNames,
+      },
+    };
   }
 }

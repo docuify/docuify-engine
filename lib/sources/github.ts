@@ -27,7 +27,6 @@ export class Github extends BaseSource {
   override async fetch(): Promise<SourceFile[]> {
     // Step 1: Grab the entire file tree from GitHub
     //
-
     const data = await this.request();
 
     // Step 2: Parse that chaotic mess into something actually usable
@@ -46,39 +45,28 @@ export class Github extends BaseSource {
   private async parse(data: any[]): Promise<SourceFile[]> {
     const fields = this.config.metadataFields || ["sha"];
 
-    return await Promise.all(
-      data.map(async (item) => {
-        const isFolder = item.type === "tree";
+    return data.map((item): SourceFile => {
+      const isFolder = item.type === "tree";
 
-        // Pick only specified fields into metadata
-        const metadata: Record<string, any> = {};
-
-        for (const field of fields) {
-          if (field in item) {
-            metadata[field] = item[field];
-          }
+      const metadata: Record<string, any> = {};
+      for (const field of fields) {
+        if (field in item) {
+          metadata[field] = item[field];
         }
-        const base: SourceFile = {
-          path: item.path,
-          type: isFolder ? "folder" : "file",
-          metadata,
-        };
+      }
 
-        if (isFolder) {
-          return base;
-        }
+      const file: SourceFile = {
+        path: item.path,
+        type: isFolder ? "folder" : "file",
+        metadata,
+        extension: isFolder ? null : getFileExtension(item.path),
+        loadContent: isFolder
+          ? undefined
+          : async () => this.fetchFileContent(item.path),
+      };
 
-        try {
-          const content = await this.fetchFileContent(item.path);
-          return { ...base, content, extension: getFileExtension(item.path) };
-        } catch (err) {
-          // File failed to load? Panic! 🔥
-          throw new Error(
-            `Failed to fetch content for ${item.path}: ${(err as Error).message}`,
-          );
-        }
-      }),
-    );
+      return file;
+    });
   }
 
   private async fetchFileContent(path: string): Promise<string> {

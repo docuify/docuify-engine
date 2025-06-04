@@ -53,7 +53,7 @@
     "typescript"
   ],
   "devDependencies": {
-    "@docuify/engine": "file:docuify-engine-0.1.0.tgz",
+    "@docuify/engine": "file:docuify-engine-0.2.3.tgz",
     "@types/node": "^22.15.29",
     "dotenv": "^16.5.0",
     "tsup": "^8.5.0",
